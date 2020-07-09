@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -16,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using webapi1.Authorization;
 using webapi1.Data;
 using webapi1.Models;
 using webapi1.Services;
@@ -33,9 +36,14 @@ namespace webapi1 {
             services.AddDbContext<AppDbContext> (options => {
                 options.UseSqlite (Configuration.GetConnectionString ("DefaultConnection"));
             });
-            services.AddIdentity<User, IdentityRole> (options => options.SignIn.RequireConfirmedAccount = true)
+
+            services.AddCors ();
+            services.AddIdentity<User, IdentityRole> (options => {
+                    options.SignIn.RequireConfirmedAccount = true;
+                })
                 .AddEntityFrameworkStores<AppDbContext> ()
                 .AddDefaultTokenProviders ();
+
             services.AddScoped<IUserClaimsPrincipalFactory<User>, AdditionalUserClaimsPrincipalFactory> ();
             services.Configure<IdentityOptions> (options => {
                 // Password settings.
@@ -55,32 +63,43 @@ namespace webapi1 {
 
                 // User settings.
                 options.User.AllowedUserNameCharacters =
-
                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
                 options.User.RequireUniqueEmail = false;
 
-                services.ConfigureApplicationCookie (options => {
-                    // Cookie settings
-                    options.Cookie.HttpOnly = true;
-                    options.ExpireTimeSpan = TimeSpan.FromMinutes (5);
+                // services.ConfigureApplicationCookie (options => {
+                //     options.Cookie.HttpOnly = true;
+                //     options.ExpireTimeSpan = TimeSpan.FromMinutes (5);
 
-                    options.LoginPath = "/Identity/Account/Login";
-                    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-                    options.SlidingExpiration = true;
-                });
+                //     options.LoginPath = "/Identity/Account/Login";
+                //     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+                //     options.SlidingExpiration = true;
+                // });
             });
-            services.AddAuthentication (JwtBearerDefaults.AuthenticationScheme)
+            services.AddAuthentication (x => {
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
                 .AddJwtBearer (options => {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey (Encoding.ASCII
-                    .GetBytes (Configuration.GetSection ("AppSettings:Token").Value)),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey (Encoding.ASCII
+                        .GetBytes (Configuration.GetSection ("AppSettings:Token").Value)),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
                     };
                 });
 
+            services.AddAuthorization (options => {
+                options.AddPolicy ("MyPolicy", policy => {
+                    policy.RequireClaim ("role", "Administrador");
+                });
+            });
             services.AddControllers ();
+            // services.AddSingleton<IAuthorizationPolicyProvider, MinimumAgePolicyProvider> ();
+
+            // services.AddSingleton<IAuthorizationHandler, MinimumAgeAuthorizationHandler> ();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -92,6 +111,10 @@ namespace webapi1 {
             // app.UseHttpsRedirection ();
 
             app.UseRouting ();
+            app.UseCors (x => x
+                .AllowAnyOrigin ()
+                .AllowAnyMethod ()
+                .AllowAnyHeader ());
 
             app.UseAuthentication ();
             app.UseAuthorization ();

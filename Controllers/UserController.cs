@@ -58,7 +58,7 @@ namespace webapi1.Controllers {
         }
 
         [HttpGet ("SignIn")]
-        public async Task<JsonResult> SignIn ([FromQuery] string username, string password) {
+        public async Task<JsonResult> LogIn ([FromQuery] string username, string password) {
             var user = await _userManager.FindByNameAsync (username);
 
             if (user != null) {
@@ -73,6 +73,7 @@ namespace webapi1.Controllers {
 
                     claims.Add (new Claim (ClaimTypes.Name, user.UserName));
                     claims.Add (new Claim (ClaimTypes.NameIdentifier, user.Id));
+                    claims.Add (new Claim (ClaimTypes.DateOfBirth, "15"));
 
                     var tokenGen = new TokenGenerator (_configuration);
                     var token = tokenGen.CreateToken (user, claims.ToList ());
