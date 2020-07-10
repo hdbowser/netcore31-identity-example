@@ -39,10 +39,9 @@ namespace webapi1 {
 
             services.AddCors ();
             services.AddIdentity<User, IdentityRole> (options => {
-                    options.SignIn.RequireConfirmedAccount = true;
+                    options.SignIn.RequireConfirmedAccount = false;
                 })
-                .AddEntityFrameworkStores<AppDbContext> ()
-                .AddDefaultTokenProviders ();
+                .AddEntityFrameworkStores<AppDbContext> ();
 
             services.AddScoped<IUserClaimsPrincipalFactory<User>, AdditionalUserClaimsPrincipalFactory> ();
             services.Configure<IdentityOptions> (options => {
@@ -65,15 +64,6 @@ namespace webapi1 {
                 options.User.AllowedUserNameCharacters =
                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
                 options.User.RequireUniqueEmail = false;
-
-                // services.ConfigureApplicationCookie (options => {
-                //     options.Cookie.HttpOnly = true;
-                //     options.ExpireTimeSpan = TimeSpan.FromMinutes (5);
-
-                //     options.LoginPath = "/Identity/Account/Login";
-                //     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-                //     options.SlidingExpiration = true;
-                // });
             });
             services.AddAuthentication (x => {
                     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -91,15 +81,9 @@ namespace webapi1 {
                     };
                 });
 
-            services.AddAuthorization (options => {
-                options.AddPolicy ("MyPolicy", policy => {
-                    policy.RequireClaim ("role", "Administrador");
-                });
-            });
+            services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider> ();
+            services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler> ();
             services.AddControllers ();
-            // services.AddSingleton<IAuthorizationPolicyProvider, MinimumAgePolicyProvider> ();
-
-            // services.AddSingleton<IAuthorizationHandler, MinimumAgeAuthorizationHandler> ();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

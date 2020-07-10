@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using webapi1.Authorization;
+using webapi1.Core;
 
 namespace webapi.Controllers {
     [Route ("api/[controller]")]
@@ -12,7 +13,7 @@ namespace webapi.Controllers {
     [ApiController]
     public class SecrectController : ControllerBase {
         [HttpGet]
-        [Authorize (Policy = "MyPolicy")]
+        [Authorize (Roles = "Administrador")]
         public ActionResult<string> Get () {
             return "Usted ha accedido a un lugar prohibido";
         }

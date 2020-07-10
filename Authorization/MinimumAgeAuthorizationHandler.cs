@@ -22,6 +22,7 @@ namespace webapi1.Authorization {
 
             // Check the user's age
             var dateOfBirthClaim = context.User.FindFirst (c => c.Type == ClaimTypes.DateOfBirth);
+            
             if (dateOfBirthClaim != null) {
                 // If the user has a date of birth claim, check their age
                 var dateOfBirth = Convert.ToDateTime (dateOfBirthClaim.Value);
