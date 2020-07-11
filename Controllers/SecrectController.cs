@@ -13,7 +13,7 @@ namespace webapi.Controllers {
     [ApiController]
     public class SecrectController : ControllerBase {
         [HttpGet]
-        [Authorize (Roles = "Administrador")]
+        [UserCan (Actions.SecrectAction)]
         public ActionResult<string> Get () {
             return "Usted ha accedido a un lugar prohibido";
         }

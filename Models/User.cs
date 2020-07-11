@@ -7,5 +7,7 @@ namespace webapi1.Models {
 
         public string LastName { get; set; }
         public bool IsAdmin { get; set; }
+        public int CategoriaID { get; set; }
+        public virtual Categoria Categoria { get; set; }
     }
 }
